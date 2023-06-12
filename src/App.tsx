@@ -5,9 +5,11 @@ import './App.css';
 
 /**
  * State declaration for <App />
+ * : Interfaces help define the values a certain entity must have
  */
 interface IState {
   data: ServerRespond[],
+  showGraph: boolean, // added to track if graph should be shown
 }
 
 /**
@@ -22,6 +24,7 @@ class App extends Component<{}, IState> {
       // data saves the server responds.
       // We use this state to parse data down to the child element (Graph) as element property
       data: [],
+      showGraph: false, // initialize: hidden, click button: shown
     };
   }
 
@@ -29,18 +32,34 @@ class App extends Component<{}, IState> {
    * Render Graph react component with state.data parse as property data
    */
   renderGraph() {
-    return (<Graph data={this.state.data}/>)
+    if (this.state.showGraph) {
+      return (<Graph data={this.state.data}/>)
+    }
   }
 
   /**
    * Get new data from server and update the state with the new data
    */
   getDataFromServer() {
-    DataStreamer.getData((serverResponds: ServerRespond[]) => {
-      // Update the state by creating a new array of data that consists of
-      // Previous data in the state and the new data from server
-      this.setState({ data: [...this.state.data, ...serverResponds] });
-    });
+    // Update the state by creating a new array of data that consists of
+    // Previous data in the state and the new data from server
+    // do things in intervals via the setInterval function
+    let x = 0;
+    // repeatedly execute a block of code at a specified time interval. 
+    const interval = setInterval(() => {
+      DataStreamer.getData((serverResponds: ServerRespond[]) => {
+        this.setState({
+          data: serverResponds,
+          showGraph: true, // show graph after first data point
+        });
+      });
+      x++;
+      // a guard value to stop the interval process we started
+      if (x > 1000) {
+        clearInterval(interval);
+      }
+    }, 100 ); 
+    // the callback function, time interval is 100ms
   }
 
   /**
